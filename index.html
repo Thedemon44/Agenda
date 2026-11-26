@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1214">
+<title>Soundboard</title>
+<style>
+:root{--bg:#e8ecef;--sf:#fff;--sf2:#f1f4f6;--ink:#14181b;--mut:#66727b;--ln:#d6dde2;--ac:#5b5bff;--acink:#fff;--sh:0 1px 2px rgba(20,30,40,.08)}
+:root[data-theme=dark]{--bg:#0f1214;--sf:#1a1f23;--sf2:#232a2f;--ink:#eef1f3;--mut:#8b979f;--ln:#2e373d;--ac:#7c7cff;--acink:#0f1214;--sh:none}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+body{min-height:100dvh;padding:env(safe-area-inset-top) 0 calc(96px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+header{display:flex;align-items:center;gap:8px;padding:14px 16px 6px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0;flex:1}
+.ib{width:44px;height:44px;border-radius:14px;background:var(--sf);box-shadow:var(--sh);font-size:19px;display:grid;place-items:center;transition:transform .12s}
+.ib:active{transform:scale(.9)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:8px 16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:20px;background:var(--sf);box-shadow:var(--sh);font-weight:600;font-size:14px;transition:transform .12s,background .2s}
+.chip:active{transform:scale(.94)}
+.chip.on{background:var(--cc,var(--ink));color:#fff}
+.chip.on.all{background:var(--ink);color:var(--bg)}
+.chip.add{color:var(--mut);padding:0 16px}
+.sub{display:flex;justify-content:space-between;align-items:center;padding:2px 20px 8px;color:var(--mut);font-size:14px;min-height:30px}
+.sub button{color:var(--ac);font-weight:600;padding:4px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:dense;gap:10px;padding:0 16px}
+.card{position:relative;aspect-ratio:1;border-radius:24px;overflow:hidden;background:var(--cb,var(--sf));box-shadow:var(--sh);text-align:left;color:var(--ct,var(--ink));transition:transform .12s cubic-bezier(.3,1.6,.5,1),filter .2s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.card:active{transform:scale(.95)}
+.card.img{color:#fff;background-size:cover;background-position:center}
+.card.img::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.72),rgba(0,0,0,.05) 60%)}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 0 0 var(--ac);transition:box-shadow .25s}
+.card.pop::after{box-shadow:inset 0 0 0 4px rgba(255,255,255,.85);transition:none}
+.card.on{filter:brightness(1.08)}
+.card .t{position:absolute;left:14px;right:14px;bottom:12px;font-weight:700;font-size:17px;line-height:1.15;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card .em{position:absolute;left:12px;top:10px;font-size:20px;display:flex;gap:2px}
+.card .eq{position:absolute;right:14px;bottom:14px;display:none;gap:3px;align-items:flex-end;height:16px}
+.card.on .eq{display:flex}
+.card.on .t{right:44px}
+.eq i{width:3px;background:currentColor;border-radius:2px;animation:b .6s infinite alternate}
+.eq i:nth-child(2){animation-delay:.2s}.eq i:nth-child(3){animation-delay:.4s}
+@keyframes b{from{height:4px}to{height:16px}}
+.more{position:absolute;z-index:2;right:2px;top:2px;width:44px;height:44px;font-size:20px;opacity:.75;display:grid;place-items:center;border-radius:50%}
+.more:active{background:rgba(128,128,128,.3)}
+.empty{grid-column:span 2;text-align:center;color:var(--mut);padding:56px 24px}
+.empty b{display:block;color:var(--ink);font-size:20px;margin-bottom:6px}
+.fab{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);height:56px;padding:0 28px;border-radius:28px;background:var(--ac);color:var(--acink);font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(0,0,0,.28);transition:transform .12s}
+.fab:active{transform:translateX(-50%) scale(.94)}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88dvh;overflow:auto;background:var(--sf);border-radius:28px 28px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.9,.3,1);z-index:6}
+.sheet.show{transform:none}
+.sheet h2{margin:0 0 14px;font-size:20px}
+label.l{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:14px 0 6px}
+input[type=text]{width:100%;height:48px;border-radius:14px;border:1.5px solid var(--ln);background:var(--sf2);color:var(--ink);padding:0 14px;font:inherit}
+input[type=text]:focus{outline:2px solid var(--ac);border-color:transparent}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.thumb{width:64px;height:64px;border-radius:16px;background:var(--sf2) center/cover;display:grid;place-items:center;font-size:24px;flex:none}
+.btn{height:46px;padding:0 18px;border-radius:14px;background:var(--sf2);font-weight:600}
+.btn:active{transform:scale(.96)}
+.btn.p{background:var(--ac);color:var(--acink);flex:1}
+.btn.d{color:#e5484d}
+.acts{display:flex;gap:10px;margin-top:22px}
+.tg{display:flex;gap:8px;flex-wrap:wrap}
+.tg .chip{box-shadow:none;background:var(--sf2);height:38px}
+.tg .chip.on{background:var(--cc);color:#fff}
+.sw{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sw button{width:36px;height:36px;border-radius:50%;background:var(--c);box-shadow:0 0 0 0 var(--ink);transition:box-shadow .15s}
+.sw button.on{box-shadow:0 0 0 3px var(--sf),0 0 0 5px var(--ink)}
+.sw input{width:36px;height:36px;border:0;padding:0;background:none;border-radius:50%}
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-90px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:14px;transition:transform .25s;z-index:9;max-width:90%}
+.toast.show{transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Soundboard</h1>
+  <button class="ib" id="stop" aria-label="Stop all sounds">⏹</button>
+  <button class="ib" id="theme" aria-label="Toggle theme">🌓</button>
+</header>
+<div class="chips" id="chips"></div>
+<div class="sub"><span id="count"></span><button id="editcat" hidden>Edit category</button></div>
+<main class="grid" id="grid"></main>
+<button class="fab" id="add">＋ Add sounds</button>
+<input type="file" id="fa" accept=".mp3,.wav,.ogg,.m4a,audio/*" multiple hidden>
+<input type="file" id="fi" accept="image/*" hidden>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COLORS=['#5b5bff','#e5484d','#f76b15','#d19d00','#2f9e63','#0d9db8','#c2409e','#6b7280'];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ---------- theme ---------- */
+const root=document.documentElement;
+function setTheme(t){root.dataset.theme=t;try{localStorage.setItem('sb-theme',t)}catch(e){}
+  document.querySelector('meta[name=theme-color]').content=t==='dark'?'#0f1214':'#e8ecef'}
+let saved=null;try{saved=localStorage.getItem('sb-theme')}catch(e){}
+setTheme(saved||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
+matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change',e=>{let s=null;try{s=localStorage.getItem('sb-theme')}catch(_){} if(!s)setTheme(e.matches?'dark':'light')});
+$('#theme').onclick=()=>setTheme(root.dataset.theme==='dark'?'light':'dark');
+
+/* ---------- IndexedDB ---------- */
+let db;
+const open=()=>new Promise((res,rej)=>{const r=indexedDB.open('soundboard',1);
+  r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('sounds',{keyPath:'id'});d.createObjectStore('cats',{keyPath:'id'})};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const tx=(st,mode,fn)=>new Promise((res,rej)=>{const t=db.transaction(st,mode);const o=t.objectStore(st);const r=fn(o);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)});
+const getAll=st=>tx(st,'readonly',o=>o.getAll());
+const put=(st,v)=>tx(st,'readwrite',o=>o.put(v));
+const del=(st,k)=>tx(st,'readwrite',o=>o.delete(k));
+
+/* ---------- audio engine ---------- */
+const ctx=new (window.AudioContext||window.webkitAudioContext)();
+const master=ctx.createGain();master.connect(ctx.destination);
+const bufs=new Map(),live=new Set(),playing=new Map();
+async function decode(s){
+  if(bufs.has(s.id))return;
+  try{const ab=await s.audio.arrayBuffer();bufs.set(s.id,await ctx.decodeAudioData(ab))}
+  catch(e){toast('Could not decode "'+s.title+'"')}
+}
+function play(s,el){
+  const b=bufs.get(s.id);
+  if(!b){toast('Still loading…');return}
+  if(ctx.state!=='running')ctx.resume();
+  const src=ctx.createBufferSource();src.buffer=b;src.connect(master);
+  playing.set(s.id,(playing.get(s.id)||0)+1);live.add(src);mark(s.id);
+  src.onended=()=>{live.delete(src);src.disconnect();const n=(playing.get(s.id)||1)-1;n?playing.set(s.id,n):playing.delete(s.id);mark(s.id)};
+  src.start(0);
+  el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),90);
+  if(navigator.vibrate)navigator.vibrate(8);
+}
+function mark(id){const e=document.querySelector('.card[data-id="'+id+'"]');if(e)e.classList.toggle('on',playing.has(id))}
+$('#stop').onclick=()=>{live.forEach(s=>{try{s.stop()}catch(e){}})};
+['touchstart','pointerdown'].forEach(ev=>addEventListener(ev,()=>{if(ctx.state!=='running')ctx.resume()},{passive:true}));
+
+/* ---------- state ---------- */
+let sounds=[],cats=[],cur='all';
+const urls=new Map();
+const thumbUrl=s=>{if(!s.thumb)return null;if(!urls.has(s.id))urls.set(s.id,URL.createObjectURL(s.thumb));return urls.get(s.id)};
+const catById=id=>cats.find(c=>c.id===id);
+
+/* ---------- render ---------- */
+function render(){
+  if(cur!=='all'&&!catById(cur))cur='all';
+  $('#chips').innerHTML='<button class="chip all'+(cur==='all'?' on':'')+'" data-c="all">All sounds</button>'+
+    cats.map(c=>`<button class="chip${cur===c.id?' on':''}" style="--cc:${c.color}" data-c="${c.id}"><span>${esc(c.emoji)}</span>${esc(c.name)}</button>`).join('')+
+    '<button class="chip add" data-c="+">＋ Category</button>';
+  const list=sounds.filter(s=>cur==='all'||s.cats.includes(cur));
+  $('#count').textContent=list.length+(list.length===1?' sound':' sounds');
+  $('#editcat').hidden=cur==='all';
+  const g=$('#grid');
+  if(!list.length){
+    g.innerHTML=`<div class="empty"><b>${sounds.length?'Nothing in this category':'No sounds yet'}</b>${sounds.length?'Open ⋯ on a sound to add it here.':'Tap “Add sounds” to import audio from your phone.'}</div>`;
+    return;
+  }
+  g.innerHTML=list.map((s,i)=>{
+    const sc=s.cats.map(catById).filter(Boolean),u=thumbUrl(s);
+    const c0=(cur!=='all'&&catById(cur))||sc[0];
+    let st='';
+    if(c0&&!u)st=`--cb:${c0.color};--ct:#fff;`;
+    if(u)st+=`background-image:url('${u}');`;
+    return `<div class="card${u?' img':''}${playing.has(s.id)?' on':''}" role="button" tabindex="0" data-id="${s.id}" style="${st}">
+      <div class="em">${sc.slice(0,3).map(c=>esc(c.emoji)).join('')}</div>
+      <button class="more" data-more="${s.id}" aria-label="Edit ${esc(s.title)}">⋯</button>
+      <div class="t">${esc(s.title)}</div>
+      <div class="eq"><i></i><i></i><i></i></div></div>`;
+  }).join('');
+}
+$('#grid').addEventListener('click',e=>{
+  const m=e.target.closest('[data-more]');
+  if(m){e.stopPropagation();editSound(m.dataset.more);return}
+  const c=e.target.closest('.card');if(!c)return;
+  if(c.dataset.lp){delete c.dataset.lp;return}
+  const s=sounds.find(x=>x.id===c.dataset.id);if(s)play(s,c);
+});
+let lp;
+const clr=()=>{clearTimeout(lp)};
+$('#grid').addEventListener('pointerdown',e=>{
+  const c=e.target.closest('.card');if(!c||e.target.closest('[data-more]'))return;
+  lp=setTimeout(()=>{c.dataset.lp=1;if(navigator.vibrate)navigator.vibrate(15);editSound(c.dataset.id)},550);
+});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>$('#grid').addEventListener(ev,clr));
+$('#grid').addEventListener('contextmenu',e=>e.preventDefault());
+$('#grid').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('card')){e.preventDefault();e.target.click()}});
+$('#chips').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  if(b.dataset.c==='+')return editCat();
+  cur=b.dataset.c;render();
+});
+$('#editcat').onclick=()=>editCat(cur);
+
+/* ---------- sheet ---------- */
+function openSheet(html){$('#sheet').innerHTML=html;$('#sheet').classList.add('show');$('#scrim').classList.add('show')}
+function closeSheet(){$('#sheet').classList.remove('show');$('#scrim').classList.remove('show')}
+$('#scrim').onclick=closeSheet;
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600)}
+
+/* ---------- import ---------- */
+$('#add').onclick=()=>$('#fa').click();
+$('#fa').onchange=async e=>{
+  const files=[...e.target.files];e.target.value='';
+  if(!files.length)return;
+  let n=0;
+  for(const f of files){
+    const s={id:uid(),title:f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim()||'Sound',audio:f,thumb:null,cats:cur==='all'?[]:[cur],created:Date.now()};
+    try{await put('sounds',s);sounds.push(s);await decode(s);n++}catch(err){toast('Could not save "'+f.name+'"')}
+  }
+  render();if(n)toast(n+(n===1?' sound added':' sounds added'));
+};
+
+/* ---------- edit sound ---------- */
+function editSound(id){
+  const s=sounds.find(x=>x.id===id);if(!s)return;
+  const d={title:s.title,thumb:s.thumb,cats:new Set(s.cats)};
+  let pu=null;
+  const draw=()=>{
+    if(pu&&pu!==urls.get(s.id))URL.revokeObjectURL(pu);
+    pu=d.thumb?URL.createObjectURL(d.thumb):null;
+    openSheet(`<h2>Edit sound</h2>
+      <label class="l" for="et">Title</label><input type="text" id="et" value="${esc(d.title)}" maxlength="60">
+      <label class="l">Thumbnail</label>
+      <div class="row"><div class="thumb" style="${pu?`background-image:url('${pu}')`:''}">${pu?'':'🔊'}</div>
+        <button class="btn" id="pi">Choose image</button>${d.thumb?'<button class="btn" id="ri">Remove</button>':''}</div>
+      <label class="l">Categories</label>
+      <div class="tg">${cats.length?cats.map(c=>`<button class="chip${d.cats.has(c.id)?' on':''}" style="--cc:${c.color}" data-k="${c.id}">${esc(c.emoji)} ${esc(c.name)}</button>`).join(''):'<span style="color:var(--mut);font-size:14px">No categories yet. Create one with “＋ Category”.</span>'}</div>
+      <div class="acts"><button class="btn d" id="ds">Delete</button><button class="btn" id="cs">Cancel</button><button class="btn p" id="ss">Save</button></div>`);
+    const keep=()=>{d.title=$('#et').value};
+    $('#pi').onclick=()=>{keep();$('#fi').onchange=ev=>{const f=ev.target.files[0];ev.target.value='';if(f){d.thumb=f;draw()}};$('#fi').click()};
+    if($('#ri'))$('#ri').onclick=()=>{keep();d.thumb=null;draw()};
+    $('#sheet').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{keep();const k=b.dataset.k;d.cats.has(k)?d.cats.delete(k):d.cats.add(k);draw()});
+    $('#cs').onclick=()=>{if(pu)URL.revokeObjectURL(pu);closeSheet()};
+    $('#ds').onclick=async e=>{
+      if(!e.currentTarget.dataset.sure){e.currentTarget.dataset.sure=1;e.currentTarget.textContent='Confirm delete';return}
+      await del('sounds',s.id);sounds=sounds.filter(x=>x.id!==s.id);bufs.delete(s.id);
+      if(urls.has(s.id)){URL.revokeObjectURL(urls.get(s.id));urls.delete(s.id)}
+      closeSheet();render();
+    };
+    $('#ss').onclick=async()=>{
+      keep();s.title=d.title.trim()||s.title;s.cats=[...d.cats];
+      if(d.thumb!==s.thumb){s.thumb=d.thumb;if(urls.has(s.id)){URL.revokeObjectURL(urls.get(s.id));urls.delete(s.id)}}
+      await put('sounds',s);if(pu)URL.revokeObjectURL(pu);closeSheet();render();
+    };
+  };
+  draw();
+}
+
+/* ---------- edit category ---------- */
+function editCat(id){
+  const ex=id?catById(id):null;
+  const d={name:ex?ex.name:'',emoji:ex?ex.emoji:'⭐',color:ex?ex.color:COLORS[cats.length%COLORS.length]};
+  const draw=()=>{
+    openSheet(`<h2>${ex?'Edit category':'New category'}</h2>
+      <label class="l" for="cn">Name</label><input type="text" id="cn" value="${esc(d.name)}" maxlength="24">
+      <label class="l" for="ce">Emoji</label><input type="text" id="ce" value="${esc(d.emoji)}" maxlength="8">
+      <label class="l">Color</label>
+      <div class="sw">${COLORS.map(c=>`<button style="--c:${c}" class="${d.color===c?'on':''}" data-col="${c}" aria-label="${c}"></button>`).join('')}<input type="color" id="cc" value="${d.color}" aria-label="Custom color"></div>
+      <div class="acts">${ex?'<button class="btn d" id="dc">Delete</button>':''}<button class="btn" id="cx">Cancel</button><button class="btn p" id="sc">Save</button></div>`);
+    const keep=()=>{d.name=$('#cn').value;d.emoji=$('#ce').value};
+    $('#sheet').querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{keep();d.color=b.dataset.col;draw()});
+    $('#cc').onchange=e=>{keep();d.color=e.target.value;draw()};
+    $('#cx').onclick=closeSheet;
+    if(ex)$('#dc').onclick=async e=>{
+      if(!e.currentTarget.dataset.sure){e.currentTarget.dataset.sure=1;e.currentTarget.textContent='Confirm delete';return}
+      await del('cats',ex.id);cats=cats.filter(c=>c.id!==ex.id);
+      for(const s of sounds)if(s.cats.includes(ex.id)){s.cats=s.cats.filter(x=>x!==ex.id);await put('sounds',s)}
+      cur='all';closeSheet();render();
+    };
+    $('#sc').onclick=async()=>{
+      keep();const name=d.name.trim();
+      if(!name){toast('Give the category a name');return}
+      const c=ex||{id:uid()};c.name=name;c.emoji=d.emoji.trim()||'⭐';c.color=d.color;
+      await put('cats',c);if(!ex){cats.push(c);cur=c.id}
+      closeSheet();render();
+    };
+  };
+  draw();
+}
+
+/* ---------- init ---------- */
+(async()=>{
+  try{db=await open();navigator.storage?.persist?.()}
+  catch(e){toast('Storage unavailable: sounds will not be saved');render();return}
+  [sounds,cats]=await Promise.all([getAll('sounds'),getAll('cats')]);
+  sounds.sort((a,b)=>a.created-b.created);
+  render();
+  await Promise.all(sounds.map(decode));
+})();
+})();
+</script>
+</body>
+</html>
