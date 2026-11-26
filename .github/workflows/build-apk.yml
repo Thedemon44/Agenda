@@ -1,0 +1,62 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Installer les dépendances et Capacitor Android
+        run: |
+          npm install
+          npx cap add android
+
+      - name: Ajouter les permissions de notification dans AndroidManifest.xml
+        run: |
+          node -e '
+          const fs = require("fs");
+          const p = "android/app/src/main/AndroidManifest.xml";
+          let xml = fs.readFileSync(p, "utf8");
+          const perms = [
+            "<uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" />",
+            "<uses-permission android:name=\"android.permission.SCHEDULE_EXACT_ALARM\" />",
+            "<uses-permission android:name=\"android.permission.WAKE_LOCK\" />",
+            "<uses-permission android:name=\"android.permission.VIBRATE\" />"
+          ].join("\n    ");
+          if (!xml.includes("POST_NOTIFICATIONS")) {
+            xml = xml.replace("<manifest", "<manifest").replace(/<application/, perms + "\n\n    <application");
+            fs.writeFileSync(p, xml);
+          }
+          '
+
+      - name: Synchroniser le code web vers Android
+        run: npx cap sync android
+
+      - name: Compiler l'APK debug
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Mettre l'APK à disposition au téléchargement
+        uses: actions/upload-artifact@v4
+        with:
+          name: agenda-doux-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          
